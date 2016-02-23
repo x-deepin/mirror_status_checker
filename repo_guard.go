@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -139,26 +140,44 @@ func main() {
 		os.Exit(-1)
 		return
 	}
-	var targets []string
-	for _, d := range subs {
-		targets = append(targets, ListSubDir(d)...)
-	}
 
 	if *CleanGuard {
-		CleanGuards(base, targets)
+		CleanGuards(base)
 	} else {
+		var targets []string
+		for _, d := range subs {
+			targets = append(targets, ListSubDir(d)...)
+		}
 		GenerateGuards(base, targets)
 	}
 }
 
-func CleanGuards(base string, targets []string) {
+func DecodeIndex(r io.Reader) ([]string, error) {
+	d := json.NewDecoder(r)
+	var lines []string
+	err := d.Decode(&lines)
+	return lines, err
+}
+
+func CleanGuards(base string) {
 	p := MakeIndexFileName(base)
-	err := os.Remove(p)
+	r, err := os.Open(p)
+	if err != nil {
+		panic("Can't find index file")
+	}
+	defer r.Close()
+
+	lines, err := DecodeIndex(r)
+	if err != nil {
+		panic("Invalid Index File " + err.Error())
+	}
+
+	err = os.Remove(p)
 	if err == nil {
 		DebugOut("Removed %q\n", p)
 	}
-	for _, d := range targets {
-		p = MakeGuardFileName(d)
+	for _, l := range lines {
+		p = path.Join(base, l)
 		err = os.Remove(p)
 		if err == nil {
 			DebugOut("Removed %q\n", p)
