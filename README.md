@@ -23,12 +23,18 @@
 Generate Guard files in server
 ```
 export $repo = /data/www/mirrors/deepin
-./repo_guard -clean-guard=true $repo/pool $repo/dists
+./mirror_status_checker -clean-guard=true $repo/pool $repo/dists
 
-./repo_guard $repo/pool $repo/dists
+./mirror_status_checker $repo/pool $repo/dists
 ```
 
 Report the sync progrss in anywhere
 ```
- % ./repo_guard -report-mirror-progress=$MirrorServer -index-url=$IndexURL
+ % ./mirror_status_checker -report-mirror-progress=$MirrorServer -index-url=$IndexURL
+```
+
+
+Report all mirror sync progress
+```
+ jq ".[].url" /var/lib/lastore/mirrors.json | xargs -t -n1 ./mirror_status_checker -index-url=http://pools.corp.deepin.com/deepin/__GUARD__INDEX__ -report-sync-progress
 ```

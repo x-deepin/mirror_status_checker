@@ -113,8 +113,9 @@ var (
 
 	CleanGuard = flag.Bool("clean-guard", false, "clean the guard files and exit")
 
-	MirrorUrl = flag.String("report-sync-progress", "", "the http url of mirror to be reported")
-	IndexUrl  = flag.String("index-url", "", "the http url of index file, it should be used with report-mirror-progress")
+	MirrorUrl    = flag.String("report-sync-progress", "", "the http url of mirror to be reported")
+	IndexUrl     = flag.String("index-url", "", "the http url of index file, it should be used with report-mirror-progress")
+	DetecThreadN = flag.Int("n-detect-thread", 5, "the number of threads for detecting progress, it should be used with report-mirror-progress")
 )
 
 func main() {
@@ -130,6 +131,9 @@ func main() {
 	flag.Parse()
 
 	if *MirrorUrl != "" {
+		if *DetecThreadN <= 0 {
+			*DetecThreadN = 5
+		}
 		if *IndexUrl == "" {
 			flag.Usage()
 			os.Exit(-1)

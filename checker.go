@@ -30,15 +30,28 @@ func ParseIndex(indexUrl string) ([]string, error) {
 }
 
 func DetectMirrorProgress(mirrorUrl string, guards []string) float64 {
-	ok := 0
-	for _, g := range guards {
-		url := mirrorUrl + "/" + g
-		v := CheckURLExists(url)
-		if v {
-			ok = ok + 1
+	result := make(chan float64)
+	queue := make(chan bool, *DetecThreadN)
+
+	go func() {
+		ok, count := 0, 0
+		for v := range queue {
+			if v {
+				ok = ok + 1
+			}
+			count = count + 1
+			if count == len(guards) {
+				break
+			}
 		}
+		result <- float64(ok) / float64(len(guards))
+	}()
+	for _, g := range guards {
+		go func(target string) {
+			queue <- CheckURLExists(target)
+		}(mirrorUrl + "/" + g)
 	}
-	return float64(ok) / float64(len(guards))
+	return <-result
 }
 
 func HandleReportMirrorProgress(indexUrl string, mirrorUrl string) (float64, error) {
