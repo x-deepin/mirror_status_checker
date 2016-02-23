@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -68,27 +69,27 @@ func MakeIndexFileName(base string) string { return path.Join(base, *GuardIndexN
 func MakeGuardFileName(base string) string { return path.Join(base, *GuardFileName) }
 
 func WriteGuards(baseDir string, guardPaths []string) {
-	var indexContent string = fmt.Sprintf("# generate at %s\n", *TimeStamp)
+	var indexContent []string
 
-	t := ([]byte)(*TimeStamp)
 	for _, p := range guardPaths {
 		gpath := MakeGuardFileName(p)
-		err := ioutil.WriteFile(gpath, t, 0644)
+		err := ioutil.WriteFile(gpath, ([]byte)(TimeNow), 0644)
 		if err != nil {
 			DebugOut("WriteGuard %q failed: %v\n", p, err)
 			continue
 		}
 
-		indexContent = indexContent +
-			path.Join(*PathPrefix, strings.TrimPrefix(gpath, baseDir)) +
-			"\n"
+		indexContent = append(indexContent, strings.TrimPrefix(gpath, baseDir))
 	}
 
-	err := ioutil.WriteFile(MakeIndexFileName(baseDir), ([]byte)(indexContent), 0644)
+	d, err := json.Marshal(indexContent)
 	if err != nil {
-		fmt.Printf("WriteGuardIndex %q failed: %v\n", baseDir, err)
+		fmt.Printf("WriteGuardIndex marshal %q failed: %v\n", indexContent, err)
 	}
-
+	err = ioutil.WriteFile(MakeIndexFileName(baseDir), d, 0644)
+	if err != nil {
+		fmt.Printf("WriteGuardIndex  failed: %v\n", err)
+	}
 }
 
 func ParseBaseDir(subs []string) (string, error) {
@@ -103,11 +104,10 @@ func ParseBaseDir(subs []string) (string, error) {
 }
 
 var (
-	GuardFileName  = flag.String("guard-file", "__GUARD__", "the guard file name")
-	GuardIndexName = flag.String("guard-index", "__GUARD__INDEX__", "the guard index name under root directory")
+	TimeNow        = fmt.Sprintf("%v", time.Now().Unix())
+	GuardFileName  = flag.String("guard-file-name", "__GUARD__"+TimeNow, "the guard file name")
+	GuardIndexName = flag.String("index-file-name", "__GUARD__INDEX__", "the guard index name under root directory")
 	GuardCount     = flag.Int("count", 100, "number of guard file you wish to set. The realy guard files is not exactly same as the number")
-	PathPrefix     = flag.String("prefix", "http://packages.deepin.com/deepin/unstable", "it will replace the root directory in guard-index-name")
-	TimeStamp      = flag.String("timestamp", fmt.Sprintf("%v", time.Now().Unix()), "the default time stamp")
 	Debug          = flag.Bool("debug", false, "")
 
 	CleanGuard = flag.Bool("clean-guard", false, "clean the guard files and exit")
@@ -117,7 +117,7 @@ func main() {
 	flag.Usage = func() {
 		fmt.Println(`
 根据实际的文件目录，采用深度优先搜索指定的目录．并在合适的位置
-安置$guard-file文件．　内容为$timestamp.
+安置$guard-file文件．
 注意:所有-开头的选项必须在指定目前之前设置.
 `)
 		flag.PrintDefaults()
