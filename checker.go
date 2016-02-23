@@ -1,12 +1,16 @@
 package main
 
 import "net/http"
+import "time"
 
 func CheckURLExists(url string) bool {
+	n := time.Now()
 	resp, err := http.Get(url)
 	if err != nil {
+		DebugOut("ERR:%v\n", err)
 		return false
 	}
+	DebugOut("CheckURLExists: %v %v %v\n", url, resp.Status, time.Now().Sub(n))
 	defer resp.Body.Close()
 
 	switch resp.StatusCode / 100 {
