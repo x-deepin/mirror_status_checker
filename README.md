@@ -1,3 +1,5 @@
+*结果检测部分已经集成到了https://github.com/linuxdeepin/lastore-daemon/tree/master/src/lastore-tools*
+
 ```
 根据实际的文件目录，采用深度优先搜索指定的目录．并在合适的位置
 安置$guard-file文件．
