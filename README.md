@@ -28,7 +28,7 @@ export $repo = /data/www/mirrors/deepin
 ./mirror_status_checker $repo/pool $repo/dists
 ```
 
-Report the sync progrss in anywhere
+Report the sync progress in anywhere
 ```
  % ./mirror_status_checker -report-mirror-progress=$MirrorServer -index-url=$IndexURL
 ```
